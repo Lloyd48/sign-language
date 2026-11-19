@@ -3,9 +3,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if __name__ == "__main__":
     BASE_DIR = Path(__file__).resolve().parent
     TRAIN_PATH = BASE_DIR / "Datasets" / "train"
-    print("Python dosyası:", Path(__file__).resolve())
-    print("Aranan klasör:", TRAIN_PATH)
-    print("Klasör mevcut mu:", TRAIN_PATH.exists())
+    print("Python File:", Path(__file__).resolve())
+    print("Searched folder:", TRAIN_PATH)
+    print("Does the folder exist?: ", TRAIN_PATH.exists())
     def get_data_loaders():
         train_transform = transforms.Compose([transforms.Resize((128,128)),transforms.RandomCrop(128, padding=4),transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),transforms.RandomAffine(degrees=10,translate=(0.08, 0.08),scale=(0.9, 1.1)),transforms.ToTensor(), transforms.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5))])
         train_data = torchvision.datasets.ImageFolder(root=TRAIN_PATH, transform=train_transform)
