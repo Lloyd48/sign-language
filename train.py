@@ -87,4 +87,4 @@ if __name__ == "__main__":
             avg_loss = loss_value / len(train_loader)
             print(f"Epoch: {epoch+1}, Loss: {avg_loss:.4f}, Accuracy: {100 * correct / total:.2f}%")
     train(model, device, train_loader, optimizer, loss_calculation, epochs=30)
-    torch.save(model.state_dict(), "sign_language_model2.pth")
+    torch.save(model.state_dict(), "sign_language_model.pth")
