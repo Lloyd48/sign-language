@@ -3,20 +3,20 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if __name__ == "__main__":
     BASE_DIR = Path(__file__).resolve().parent
     TRAIN_PATH = BASE_DIR / "Datasets" / "train"
-    print("Python File:", Path(__file__).resolve())
-    print("Searched folder:", TRAIN_PATH)
-    print("Does the folder exist?: ", TRAIN_PATH.exists())
+    print("Python dosyası:", Path(__file__).resolve())
+    print("Aranan klasör:", TRAIN_PATH)
+    print("Klasör mevcut mu:", TRAIN_PATH.exists())
     def get_data_loaders():
-        train_transform = transforms.Compose([transforms.Resize((128,128)),transforms.RandomCrop(128, padding=4),transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),transforms.RandomAffine(degrees=10,translate=(0.08, 0.08),scale=(0.9, 1.1)),transforms.ToTensor(), transforms.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5))])
+        train_transform = transforms.Compose([transforms.Resize((128, 128)),transforms.RandomAffine(degrees=8,translate=(0.08, 0.08),scale=(0.9, 1.1),shear=5),transforms.ColorJitter(brightness=0.25,contrast=0.25,saturation=0.15,hue=0.03),transforms.RandomPerspective(distortion_scale=0.15,p=0.2),transforms.RandomApply([transforms.GaussianBlur(kernel_size=3)], p=0.15),transforms.ToTensor(),transforms.Normalize((0.5, 0.5, 0.5),(0.5, 0.5, 0.5))])
         train_data = torchvision.datasets.ImageFolder(root=TRAIN_PATH, transform=train_transform)
         print("Train sınıfları:", train_data.class_to_idx)
-        train_loader = torch.utils.data.DataLoader(train_data, batch_size=128, shuffle=True,num_workers=6, pin_memory=True)
+        train_loader = torch.utils.data.DataLoader(train_data, batch_size=64, shuffle=True,num_workers=8, pin_memory=True)
         return train_loader
     train_loader = get_data_loaders()
     class Cnn(nn.Module):
         def __init__(self):
             super(Cnn, self).__init__()
-            self.shortcut1 = nn.Sequential(nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1), nn.BatchNorm2d(64),)
+            self.shortcut1 = nn.Sequential(nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1), nn.BatchNorm2d(64))
             self.block1 = nn.Sequential(nn.Conv2d(3,64,3,1,1),nn.BatchNorm2d(64),nn.ReLU(),nn.Conv2d(64,64,3,1,1),nn.BatchNorm2d(64))
 
             self.shortcut2 = nn.Sequential(nn.Conv2d(64,128,1,1,0),nn.BatchNorm2d(128))
@@ -27,6 +27,8 @@ if __name__ == "__main__":
             
             self.shortcut4 = nn.Sequential(nn.Conv2d(256,256,1,1,0),nn.BatchNorm2d(256))
             self.block4 = nn.Sequential(nn.Conv2d(256,256,3,1,1),nn.BatchNorm2d(256),nn.ReLU(),nn.Conv2d(256,256,3,1,1),nn.BatchNorm2d(256))
+            self.block5 = nn.Sequential(nn.Conv2d(in_channels=256,out_channels=256,kernel_size=3,stride=1,padding=1),nn.BatchNorm2d(256),nn.ReLU(),nn.Conv2d(256,256,3,padding=1),nn.BatchNorm2d(256),)
+            self.shortcut5 = nn.Sequential(nn.Conv2d(in_channels=256,out_channels=256,kernel_size=1,stride=1),nn.BatchNorm2d(256),)   
             self.relu = nn.ReLU()
             self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
             self.classifier = nn.Sequential(nn.AdaptiveAvgPool2d(1),nn.Flatten(),nn.BatchNorm1d(256),nn.Dropout(0.2),nn.Linear(256, 26))
@@ -51,6 +53,12 @@ if __name__ == "__main__":
             out = self.block4(out)
             out += identity
             out = self.relu(out)
+            identity = self.shortcut5(out)
+            
+            out = self.block5(out)
+            out += identity
+            out = self.relu(out)
+
             out = self.classifier(out)
             return out
     model = Cnn().to(device)
@@ -79,4 +87,4 @@ if __name__ == "__main__":
             avg_loss = loss_value / len(train_loader)
             print(f"Epoch: {epoch+1}, Loss: {avg_loss:.4f}, Accuracy: {100 * correct / total:.2f}%")
     train(model, device, train_loader, optimizer, loss_calculation, epochs=30)
-    torch.save(model.state_dict(), "sign_language_model.pth")
+    torch.save(model.state_dict(), "sign_language_model2.pth")
